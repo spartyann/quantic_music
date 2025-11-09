@@ -19,10 +19,24 @@
 			</div>
 		</td>
 		<td>
-			{{ round(audibleFrequence) }} Hz
+			<div><strong>{{ round(audibleFrequence) }} Hz</strong></div>
+			<div v-if="show_details">
+				Mult par 2: {{ factor2 }}
+			</div>
 		</td>
 		<td>
-
+			<div>{{ notes[noteIndexProche].note }} - {{ notes[noteIndexProche].note2 }}: {{ notes[noteIndexProche].frequence_str }}</div>
+			<div>Diff: {{ round(noteDiffFreq) }} Hz</div>
+			
+		</td>
+		<td>
+			<div>{{ deltaEau }} ({{  diapasonEauDemiton }} demis tons + {{ deltaEau - diapasonEauDemiton*100 }})</div>
+		</td>
+		<td>
+			<div>{{ diapasonEauNoteStr }}</div>
+		</td>
+		<td>
+			<a @click="$emit('delete', index)"><i class="fa fa-trash" aria-hidden="true"></i></a>
 		</td>
 	</tr>
 
@@ -37,7 +51,7 @@
 
 export default {
 
-	props: [ "data", "show_details", "precision", "freq_min_aud" ],
+	props: [ "data", "show_details", "precision", "freq_min_aud", "notes", "index" ],
 
 	data() {
 		return {
@@ -67,11 +81,64 @@ export default {
 		},
 
 		factor2(){
-			return this.get2factor(this.frequence);
+			return this.get2factor(this.frequence, Math.max(10, this.freq_min_aud));
 		},
 
 		audibleFrequence(){
 			return this.frequence * Math.pow(2, this.factor2);
+		},
+
+		noteIndexProche(){
+			let frequenceCible = this.audibleFrequence;
+
+			let plusProcheIndex = -1;
+			let differenceMin = Infinity;
+
+			for (let i = 0; i < this.notes.length; i++) {
+				// Calcule la différence absolue entre la fréquence cible et la fréquence de la note
+				const difference = Math.abs(frequenceCible - this.notes[i].frequence);
+
+				// Si cette différence est plus petite que la plus petite différence trouvée jusqu'à présent,
+				// cette note devient la nouvelle note la plus proche.
+				if (difference < differenceMin) {
+					differenceMin = difference;
+					plusProcheIndex = i;
+				}
+			}
+
+			return plusProcheIndex;
+		},
+
+		noteDiffFreq(){
+			return this.audibleFrequence - this.notes[this.noteIndexProche].frequence;
+		},
+
+		deltaEau(){
+			//return this.audibleFrequence * 1.02416
+			return Math.round( 1200 * Math.log2(
+				(this.frequence * Math.pow(2, this.get2factor(this.frequence, 429.62))) / 429.62));
+		},
+
+		diapasonEauDemiton(){
+			//let la = 440;
+			let de = this.deltaEau;
+
+			let demiTon = Math.floor(de/100);
+
+			return demiTon;
+		},
+		diapasonEauIndexNote(){
+			let demiTon = this.diapasonEauDemiton;
+			let indexNote = demiTon + 49 - 1;
+
+			return indexNote;
+		},
+		diapasonEauNoteStr(){
+			let res =  this.notes[this.diapasonEauIndexNote].note;
+
+			res += " (+ " + (this.deltaEau - (this.diapasonEauDemiton *100)) + ")"
+
+			return res;
 		}
 	},
 
@@ -86,10 +153,10 @@ export default {
 			return masse * (Math.pow(299792458,2) / (6.62607015 * Math.pow(10,-34)));
 		},
 
-		get2factor(frequence){
+		get2factor(frequence, freqMin){
 
-			let FREQ_MIN = Math.max(10, this.freq_min_aud);
-			let FREQ_MAX = FREQ_MIN * 2;
+			
+			let freqMax = freqMin * 2;
 
 			// Gérer les cas de fréquences non valides
 			if (frequence <= 0) {
@@ -98,7 +165,7 @@ export default {
 			}
 
 			// Si la fréquence est déjà dans la plage souhaitée, aucun changement n'est nécessaire
-			if (frequence >= FREQ_MIN && frequence <= FREQ_MAX) {
+			if (frequence >= freqMin && frequence <= freqMax) {
 				return 0;
 			}
 
@@ -107,14 +174,14 @@ export default {
 
 			// Si la fréquence est trop élevée, on la divise par 2 jusqu'à ce qu'elle soit dans la plage.
 			// On décrémente x à chaque division.
-			while (freqActuelle > FREQ_MAX) {
+			while (freqActuelle > freqMax) {
 				freqActuelle /= 2;
 				x--;
 			}
 
 			// Si la fréquence est trop basse, on la multiplie par 2 jusqu'à ce qu'elle soit dans la plage.
 			// On incrémente x à chaque multiplication.
-			while (freqActuelle < FREQ_MIN) {
+			while (freqActuelle < freqMin) {
 				freqActuelle *= 2;
 				x++;
 			}
