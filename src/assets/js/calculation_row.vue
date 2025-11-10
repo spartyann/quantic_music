@@ -27,7 +27,7 @@
 		<td>
 			<div>{{ notes[noteIndexProche].note }} - {{ notes[noteIndexProche].note2 }}: {{ notes[noteIndexProche].frequence_str }}</div>
 			<div>Diff: {{ round(noteDiffFreq) }} Hz</div>
-			
+			<div>Diff: {{ round(noteDiffCentT) }} c</div>			
 		</td>
 		<td>
 			<div>{{ deltaEau }} ({{  diapasonEauDemiton }} demis tons + {{ deltaEau - diapasonEauDemiton*100 }})</div>
@@ -113,10 +113,14 @@ export default {
 			return this.audibleFrequence - this.notes[this.noteIndexProche].frequence;
 		},
 
+		noteDiffCentT(){
+			return 1200 * Math.log2(this.audibleFrequence / this.notes[this.noteIndexProche].frequence);
+		},
+
 		deltaEau(){
 			//return this.audibleFrequence * 1.02416
 			return Math.round( 1200 * Math.log2(
-				(this.frequence * Math.pow(2, this.get2factor(this.frequence, 429.62))) / 429.62));
+				(429.62 / (this.frequence * Math.pow(2, this.get2factor(this.frequence, 429.62))))));
 		},
 
 		diapasonEauDemiton(){

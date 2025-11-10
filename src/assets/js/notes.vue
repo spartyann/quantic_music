@@ -13,7 +13,6 @@
 							<th>Note</th>
 							<th>Octave</th>
 							<th>Fréquence</th>
-							<th>Fréquence</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -22,7 +21,6 @@
 							<td>{{ note.note2 }}</td>
 							<td>{{ note.octave }}</td>
 							<td>{{ note.frequence_str }}</td>
-							<td>{{ note.frequence }}</td>
 						</tr>
 					</tbody>
 				</table>
